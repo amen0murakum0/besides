@@ -57,6 +57,7 @@
   .pages::-webkit-scrollbar { width: 8px; }
   .pages::-webkit-scrollbar-thumb { background: #dcdad5; border-radius: 4px; }
   .pages::-webkit-scrollbar-track { background: transparent; }
+  .pages.free-scroll { scroll-snap-type: none; }
   section {
     min-height: 100vh;
     min-height: 100svh;
@@ -300,30 +301,27 @@
     sections[index].scrollIntoView({ behavior: 'smooth' });
   }
 
-  var seenObserver = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('seen');
-        seenObserver.unobserve(entry.target);
-      }
-    });
-  }, { root: pages, threshold: 0 });
-
-  sections.forEach(function (s) { seenObserver.observe(s); });
-
-  function updateActive() {
-    var mid = pages.getBoundingClientRect().top + pages.clientHeight / 2;
+  function updateSections() {
+    var viewH = pages.clientHeight;
+    var tall = sections.some(function (s) { return s.getBoundingClientRect().height > viewH + 2; });
+    pages.classList.toggle('free-scroll', tall);
+    var mid = pages.getBoundingClientRect().top + viewH / 2;
     var index = current;
     sections.forEach(function (s, i) {
       var rect = s.getBoundingClientRect();
       if (rect.top <= mid && rect.bottom > mid) index = i;
+      if (rect.bottom <= 0 || rect.top >= viewH) {
+        s.classList.remove('seen');
+      } else if (rect.top < viewH * 0.8) {
+        s.classList.add('seen');
+      }
     });
     if (index !== current) setActive(index);
   }
 
-  pages.addEventListener('scroll', updateActive);
-  window.addEventListener('resize', updateActive);
-  updateActive();
+  pages.addEventListener('scroll', updateSections);
+  window.addEventListener('resize', updateSections);
+  updateSections();
 
   dots.forEach(function (dot, i) {
     dot.addEventListener('click', function () { goTo(i); });
@@ -380,6 +378,7 @@
           });
           box.appendChild(p);
         });
+        updateSections();
       })
       .catch(function () {});
   }
@@ -481,6 +480,7 @@
     .then(function (code) {
       var data = (new Function(code + '\nreturn pdfFiles;'))();
       initPdfs(data || {});
+      updateSections();
     })
     .catch(function () {
       Array.prototype.forEach.call(document.querySelectorAll('.pdf-box'), function (box) {
