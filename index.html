@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>此外besides</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: #faf9f7;
+    color: #1f2328;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    line-height: 1.9;
+  }
+  .brand {
+    position: fixed;
+    top: 28px;
+    left: 40px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    z-index: 10;
+  }
+  .pages {
+    height: 100vh;
+    height: 100svh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .pages::-webkit-scrollbar { display: none; }
+  section {
+    height: 100vh;
+    height: 100svh;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 88px 48px 48px;
+  }
+  .inner {
+    width: 100%;
+    max-width: 620px;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  section.active .inner {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .bar { width: 40px; height: 3px; background: #2f6f4f; margin-bottom: 18px; }
+  h2 { font-size: 24px; font-weight: 600; margin: 0 0 14px; letter-spacing: .5px; }
+  p { margin: 0 0 12px; }
+  .tabs {
+    display: flex;
+    gap: 26px;
+    margin: 2px 0 18px;
+  }
+  .tabs button {
+    position: relative;
+    padding: 0 0 5px;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #9aa0a6;
+    cursor: pointer;
+    transition: color .3s ease;
+  }
+  .tabs button:hover,
+  .tabs button.active { color: #1f2328; }
+  .tabs button.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: #2f6f4f;
+  }
+  .panels { display: grid; }
+  .panel {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity .45s ease, transform .45s ease;
+  }
+  .panel.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .pdf-box { margin-top: 4px; }
+  .pdf-list {
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+  }
+  .pdf-list a {
+    display: block;
+    padding: 10px 2px;
+    border-bottom: 1px solid #ecebe7;
+    font-size: 15px;
+    color: #1f2328;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .25s ease;
+  }
+  .pdf-list a:first-child { border-top: 1px solid #ecebe7; }
+  .pdf-list a:hover { color: #2f6f4f; }
+  .pdf-msg { margin: 4px 0 0; font-size: 14px; color: #9aa0a6; }
+  .search { max-width: 460px; margin: 0 0 14px; }
+  .search input {
+    width: 100%;
+    padding: 6px 2px 8px;
+    border: 0;
+    border-bottom: 1px solid #dcdad5;
+    background: transparent;
+    font-family: inherit;
+    font-size: 15px;
+    color: #1f2328;
+    outline: none;
+    transition: border-color .25s ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .search input::placeholder { color: #b3b8bd; }
+  .search input:focus { border-bottom-color: #2f6f4f; }
+  .search-results { max-width: 460px; }
+  .search-group { margin: 0 0 12px; }
+  .search-folder { margin: 0 0 2px; font-size: 12px; color: #9aa0a6; letter-spacing: .5px; }
+  #collect.searching .tabs,
+  #collect.searching .panels { display: none; }
+  .dots {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 10;
+  }
+  .dots button {
+    width: 24px;
+    height: 24px;
+    padding: 7px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .dots button::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #cfd4d9;
+    transition: background .3s ease, transform .3s ease;
+  }
+  .dots button.active::after {
+    background: #2f6f4f;
+    transform: scale(1.25);
+  }
+  footer {
+    position: fixed;
+    left: 40px;
+    bottom: 24px;
+    color: #9aa0a6;
+    font-size: 13px;
+    z-index: 10;
+  }
+  @media (max-width: 720px) {
+    .brand { top: 22px; left: 24px; }
+    section { padding: 64px 56px 40px 24px; }
+    h2 { font-size: 22px; }
+    p { font-size: 15px; }
+    .pdf-list { max-width: 100%; }
+    .pdf-list a { font-size: 14px; }
+    .search { max-width: 100%; }
+    .search input { font-size: 16px; }
+    footer { left: 24px; bottom: 20px; }
+    .dots { right: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="brand">此外besides</div>
+
+<nav class="dots" aria-label="模块切换">
+  <button class="active" aria-label="写在前面"></button>
+  <button aria-label="收集"></button>
+  <button aria-label="回答可能的质疑"></button>
+</nav>
+
+<main class="pages">
+  <section class="active">
+    <div class="inner">
+      <div class="bar"></div>
+      <h2>写在前面</h2>
+      <div id="foreword-body">
+        <p>你好，欢迎来到我的主页。这里会放一些学习笔记和小项目。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="collect">
+    <div class="inner">
+      <div class="bar"></div>
+      <h2>收集</h2>
+      <div class="search">
+        <input id="pdf-search" type="search" placeholder="搜索标题或作者" aria-label="搜索标题或作者">
+      </div>
+      <div class="tabs" role="tablist" aria-label="收集分类">
+        <button class="tab active" type="button" role="tab" aria-selected="true">浅谈</button>
+        <button class="tab" type="button" role="tab" aria-selected="false">随笔</button>
+        <button class="tab" type="button" role="tab" aria-selected="false">连载</button>
+      </div>
+      <div class="panels">
+        <div class="panel active" role="tabpanel">
+          <div class="pdf-box" data-folder="浅谈">
+            <p class="pdf-msg">正在加载…</p>
+          </div>
+        </div>
+        <div class="panel" role="tabpanel">
+          <div class="pdf-box" data-folder="随笔">
+            <p class="pdf-msg">正在加载…</p>
+          </div>
+        </div>
+        <div class="panel" role="tabpanel">
+          <div class="pdf-box" data-folder="连载">
+            <p class="pdf-msg">正在加载…</p>
+          </div>
+        </div>
+      </div>
+      <div class="search-results" hidden></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="inner">
+      <div class="bar"></div>
+      <h2>回答可能的质疑</h2>
+      <div id="questions-body">
+        <p>先把能想到的问题和回答写在这里，之后遇到新的再补。</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>© 2026 此外besides</footer>
+
+<script>
+  var pages = document.querySelector('.pages');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section'));
+  var dots = Array.prototype.slice.call(document.querySelectorAll('.dots button'));
+  var current = 0;
+  var lockedUntil = 0;
+  var lastWheel = 0;
+
+  function setActive(index) {
+    current = index;
+    sections.forEach(function (s, i) { s.classList.toggle('active', i === index); });
+    dots.forEach(function (d, i) { d.classList.toggle('active', i === index); });
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= sections.length) return;
+    sections[index].scrollIntoView({ behavior: 'smooth' });
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        setActive(sections.indexOf(entry.target));
+      }
+    });
+  }, { root: pages, threshold: [0.5] });
+
+  sections.forEach(function (s) { observer.observe(s); });
+
+  dots.forEach(function (dot, i) {
+    dot.addEventListener('click', function () { goTo(i); });
+  });
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t, j) {
+        t.classList.toggle('active', i === j);
+        t.setAttribute('aria-selected', i === j ? 'true' : 'false');
+      });
+      panels.forEach(function (p, j) {
+        p.classList.toggle('active', i === j);
+      });
+    });
+  });
+
+  pages.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var now = performance.now();
+    var newGesture = now - lastWheel > 200;
+    lastWheel = now;
+    if (!newGesture || now < lockedUntil) return;
+    var next = current + (e.deltaY > 0 ? 1 : -1);
+    if (next < 0 || next >= sections.length) return;
+    goTo(next);
+    lockedUntil = now + 900;
+  }, { passive: false });
+
+  window.addEventListener('keydown', function (e) {
+    var dir = 0;
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') dir = 1;
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') dir = -1;
+    if (!dir) return;
+    e.preventDefault();
+    if (performance.now() < lockedUntil) return;
+    goTo(current + dir);
+    lockedUntil = performance.now() + 700;
+  });
+
+  function loadText(id, file) {
+    fetch(file + '?t=' + Date.now())
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.status);
+        return res.text();
+      })
+      .then(function (text) {
+        var box = document.getElementById(id);
+        if (!box) return;
+        var parts = text.split(/\n\s*\n/);
+        box.innerHTML = '';
+        parts.forEach(function (part) {
+          var clean = part.replace(/\s*\n\s*/g, '').trim();
+          if (!clean) return;
+          var p = document.createElement('p');
+          p.textContent = clean;
+          box.appendChild(p);
+        });
+      })
+      .catch(function () {});
+  }
+
+  loadText('foreword-body', 'foreword.txt');
+  loadText('questions-body', 'questions.txt');
+
+  function pdfUrl(folder, file) {
+    return 'collection/' + encodeURIComponent(folder) + '/' + encodeURIComponent(file);
+  }
+
+  function initPdfs(data) {
+  var folderOrder = ['浅谈', '随笔', '连载'];
+  var allPdfs = [];
+
+  function normalize(files, folder) {
+    return (files || []).map(function (f) {
+      var item = typeof f === 'string' ? { file: f, author: '' } : f;
+      return {
+        file: item.file,
+        author: item.author || '',
+        folder: folder,
+        title: item.file.replace(/\.pdf$/i, '')
+      };
+    });
+  }
+
+  function makeList(files) {
+    var list = document.createElement('div');
+    list.className = 'pdf-list';
+    files.forEach(function (item) {
+      var link = document.createElement('a');
+      link.href = pdfUrl(item.folder, item.file);
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.title = '预览或下载 ' + item.file;
+      link.textContent = item.title;
+      list.appendChild(link);
+    });
+    return list;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.pdf-box'), function (box) {
+    var folder = box.getAttribute('data-folder');
+    var files = normalize(data[folder], folder);
+    allPdfs = allPdfs.concat(files);
+    if (!files.length) {
+      box.innerHTML = '<p class="pdf-msg">这个文件夹里还没有 PDF。</p>';
+      return;
+    }
+    box.innerHTML = '';
+    box.appendChild(makeList(files));
+  });
+
+  var searchInput = document.getElementById('pdf-search');
+  var searchResults = document.querySelector('.search-results');
+  var collectSection = document.getElementById('collect');
+
+  searchInput.addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    searchResults.innerHTML = '';
+    if (!q) {
+      collectSection.classList.remove('searching');
+      searchResults.hidden = true;
+      return;
+    }
+    collectSection.classList.add('searching');
+    searchResults.hidden = false;
+    var found = 0;
+    folderOrder.forEach(function (folder) {
+      var matches = allPdfs.filter(function (item) {
+        return item.folder === folder && (
+          item.title.toLowerCase().indexOf(q) > -1 ||
+          item.author.toLowerCase().indexOf(q) > -1
+        );
+      });
+      if (!matches.length) return;
+      found += matches.length;
+      var group = document.createElement('div');
+      group.className = 'search-group';
+      var label = document.createElement('p');
+      label.className = 'search-folder';
+      label.textContent = folder;
+      group.appendChild(label);
+      group.appendChild(makeList(matches));
+      searchResults.appendChild(group);
+    });
+    if (!found) {
+      searchResults.innerHTML = '<p class="pdf-msg">没有找到匹配的条目。</p>';
+    }
+  });
+  }
+
+  fetch('collection-index.js?t=' + Date.now())
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      return res.text();
+    })
+    .then(function (code) {
+      var data = (new Function(code + '\nreturn pdfFiles;'))();
+      initPdfs(data || {});
+    })
+    .catch(function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.pdf-box'), function (box) {
+        box.innerHTML = '<p class="pdf-msg">PDF 列表暂时不可用。</p>';
+      });
+    });
+</script>
+</body>
+</html>
