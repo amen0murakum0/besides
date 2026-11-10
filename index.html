@@ -341,10 +341,17 @@
         var parts = text.split(/\n\s*\n/);
         box.innerHTML = '';
         parts.forEach(function (part) {
-          var clean = part.replace(/\s*\n\s*/g, '').trim();
-          if (!clean) return;
+          var lines = part.split(/\r?\n/).map(function (line) {
+            return line.trim();
+          });
+          while (lines.length && !lines[0]) lines.shift();
+          while (lines.length && !lines[lines.length - 1]) lines.pop();
+          if (!lines.length) return;
           var p = document.createElement('p');
-          p.textContent = clean;
+          lines.forEach(function (line, i) {
+            if (i > 0) p.appendChild(document.createElement('br'));
+            p.appendChild(document.createTextNode(line));
+          });
           box.appendChild(p);
         });
       })
