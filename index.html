@@ -14,6 +14,28 @@
     font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
     line-height: 1.9;
   }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #faf9f7;
+    z-index: 9;
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 56px;
+    background: linear-gradient(to top, #faf9f7 60%, rgba(250, 249, 247, 0));
+    z-index: 9;
+    pointer-events: none;
+  }
   .brand {
     position: fixed;
     top: 28px;
@@ -27,19 +49,22 @@
     height: 100vh;
     height: 100svh;
     overflow-y: auto;
-    scroll-snap-type: y mandatory;
+    scroll-snap-type: y proximity;
     overscroll-behavior: contain;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: #dcdad5 transparent;
   }
-  .pages::-webkit-scrollbar { display: none; }
+  .pages::-webkit-scrollbar { width: 8px; }
+  .pages::-webkit-scrollbar-thumb { background: #dcdad5; border-radius: 4px; }
+  .pages::-webkit-scrollbar-track { background: transparent; }
   section {
-    height: 100vh;
-    height: 100svh;
+    min-height: 100vh;
+    min-height: 100svh;
     scroll-snap-align: start;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    padding: 88px 48px 48px;
+    padding: 88px 48px 64px;
   }
   .inner {
     width: 100%;
@@ -48,7 +73,7 @@
     transform: translateY(24px);
     transition: opacity .8s ease, transform .8s ease;
   }
-  section.active .inner {
+  section.seen .inner {
     opacity: 1;
     transform: translateY(0);
   }
@@ -180,7 +205,7 @@
   }
   @media (max-width: 720px) {
     .brand { top: 22px; left: 24px; }
-    section { padding: 64px 56px 40px 24px; }
+    section { padding: 64px 56px 72px 24px; }
     h2 { font-size: 22px; }
     p { font-size: 15px; }
     .pdf-list { max-width: 100%; }
@@ -263,8 +288,6 @@
   var sections = Array.prototype.slice.call(document.querySelectorAll('section'));
   var dots = Array.prototype.slice.call(document.querySelectorAll('.dots button'));
   var current = 0;
-  var lockedUntil = 0;
-  var lastWheel = 0;
 
   function setActive(index) {
     current = index;
@@ -277,15 +300,30 @@
     sections[index].scrollIntoView({ behavior: 'smooth' });
   }
 
-  var observer = new IntersectionObserver(function (entries) {
+  var seenObserver = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
-      if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-        setActive(sections.indexOf(entry.target));
+      if (entry.isIntersecting) {
+        entry.target.classList.add('seen');
+        seenObserver.unobserve(entry.target);
       }
     });
-  }, { root: pages, threshold: [0.5] });
+  }, { root: pages, threshold: 0 });
 
-  sections.forEach(function (s) { observer.observe(s); });
+  sections.forEach(function (s) { seenObserver.observe(s); });
+
+  function updateActive() {
+    var mid = pages.getBoundingClientRect().top + pages.clientHeight / 2;
+    var index = current;
+    sections.forEach(function (s, i) {
+      var rect = s.getBoundingClientRect();
+      if (rect.top <= mid && rect.bottom > mid) index = i;
+    });
+    if (index !== current) setActive(index);
+  }
+
+  pages.addEventListener('scroll', updateActive);
+  window.addEventListener('resize', updateActive);
+  updateActive();
 
   dots.forEach(function (dot, i) {
     dot.addEventListener('click', function () { goTo(i); });
@@ -306,27 +344,15 @@
     });
   });
 
-  pages.addEventListener('wheel', function (e) {
-    e.preventDefault();
-    var now = performance.now();
-    var newGesture = now - lastWheel > 200;
-    lastWheel = now;
-    if (!newGesture || now < lockedUntil) return;
-    var next = current + (e.deltaY > 0 ? 1 : -1);
-    if (next < 0 || next >= sections.length) return;
-    goTo(next);
-    lockedUntil = now + 900;
-  }, { passive: false });
-
   window.addEventListener('keydown', function (e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'button' || tag === 'a' || tag === 'select') return;
     var dir = 0;
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') dir = 1;
     if (e.key === 'ArrowUp' || e.key === 'PageUp') dir = -1;
     if (!dir) return;
     e.preventDefault();
-    if (performance.now() < lockedUntil) return;
-    goTo(current + dir);
-    lockedUntil = performance.now() + 700;
+    pages.scrollBy({ top: dir * pages.clientHeight * 0.9, behavior: 'smooth' });
   });
 
   function loadText(id, file) {
