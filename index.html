@@ -81,6 +81,7 @@
   .bar { width: 40px; height: 3px; background: #2f6f4f; margin-bottom: 18px; }
   h2 { font-size: 24px; font-weight: 600; margin: 0 0 14px; letter-spacing: .5px; }
   p { margin: 0 0 12px; }
+  .date-line { display: block; text-align: right; }
   .tabs {
     display: flex;
     gap: 26px;
@@ -373,6 +374,13 @@
           if (!lines.length) return;
           var p = document.createElement('p');
           lines.forEach(function (line, i) {
+            if (/^\d{4}\.\d{1,2}\.\d{1,2}$/.test(line)) {
+              var date = document.createElement('span');
+              date.className = 'date-line';
+              date.textContent = line;
+              p.appendChild(date);
+              return;
+            }
             if (i > 0) p.appendChild(document.createElement('br'));
             p.appendChild(document.createTextNode(line));
           });
